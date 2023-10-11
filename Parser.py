@@ -5,12 +5,12 @@ note: currently does not handle bit shift
 '''
 
 '''
-Extracts cpp operators and stores them in a fictionary called operators that count their occurence
+Extracts cpp operators and stores them in a fictionary called operators that count their occurrence
 ex: '=': 'equals'
 '''
 
-operators_count = {}
-operators_name = {}
+operators_count = {} # counts occurrence  of a particular operator
+operators_name = {} # matches the operator and its name
 
 operators_path = 'C:\Dennis\Purdue\Junior Year\Algorithm Analysis\ParseInjectCPP\operators.txt'
 operators_file = open(operators_path, 'r')
@@ -57,46 +57,95 @@ source_code_lines = source_code_file.readlines()
 static_declaration = []
 lines_to_inject = []
 
+append_in_for = []
+
+
+
 for line in source_code_lines:
 
     line.strip()
 
     tokens = line.split(' ')
 
+    for_control = False
+
+    if not for_control and len(append_in_for) != 0:
+        lines_to_inject += append_in_for
+        append_in_for = []
+
+
     for t in tokens:
         t.strip()
+
+        loop_counter = 0
 
         # case with keywords (for and while loops)
         if t in keywords.keys():
             print(f'found keyword {t} in code')
             var_stack.append(keywords[t])
             keywords[t] += 1
+            for_control = True
 
 
 
         # operators
         else:
-            if t in operators_name.keys():
-                print(f'found operator {t} in code')
+            if not for_control: # we are not on a line in a for loop
+                if t in operators_name.keys():
+                    print(f'found operator {t} in code')
 
-                static_declaration.append(f"int {operators_name[t] + str(operators_count[t])} = 0;\n") # add counter
-                lines_to_inject.append(f"{operators_name[t] + str(operators_count[t])}++;\n") # increment
-                operators_count[t] += 1 # increase count for this operator
+                    static_declaration.append(f"int {operators_name[t] + str(operators_count[t])} = 0;\n") # add counter
+                    lines_to_inject.append(f"{operators_name[t] + str(operators_count[t])}++;\n") # increment
+                    operators_count[t] += 1 # increase count for this operator
 
-            else:
-                if '--' in t:
-                    print(f'found operator -- in code {t}')
-                    static_declaration.append(
-                        f"int {operators_name['--'] + str(operators_count['--'])} = 0;\n")  # add counter
-                    lines_to_inject.append(f"{operators_name['--'] + str(operators_count['--'])}++;\n")  # increment
-                    operators_count['--'] += 1  # increase count for this operator
+                ## cheeting right now for checking increament and decreament
+                else:
+                    if '--' in t:
+                        print(f'found operator -- in code {t}')
+                        static_declaration.append(
+                            f"int {operators_name['--'] + str(operators_count['--'])} = 0;\n")  # add counter
+                        lines_to_inject.append(f"{operators_name['--'] + str(operators_count['--'])}++;\n")  # increment
+                        operators_count['--'] += 1  # increase count for this operator
 
-                elif '++' in t:
-                    print(f'found operator ++ in code {t}')
-                    static_declaration.append(
-                        f"int {operators_name['++'] + str(operators_count['++'])} = 0;\n")  # add counter
-                    lines_to_inject.append(f"{operators_name['++'] + str(operators_count['++'])}++;\n")  # increment
-                    operators_count['++'] += 1  # increase count for this operator
+                    elif '++' in t:
+                        print(f'found operator ++ in code {t}')
+                        static_declaration.append(
+                            f"int {operators_name['++'] + str(operators_count['++'])} = 0;\n")  # add counter
+                        lines_to_inject.append(f"{operators_name['++'] + str(operators_count['++'])}++;\n")  # increment
+                        operators_count['++'] += 1  # increase count for this operator
+            else: # we are in a for loop
+                if t in operators_name.keys(): # found operator
+
+                    if t in operators_name.keys():
+                        print(f'found operator {t} in code')
+
+                        static_declaration.append(
+                            f"int {operators_name[t] + str(operators_count[t])} = 0;\n")  # add counter
+                        append_in_for.append(f"{operators_name[t] + str(operators_count[t])}++;\n")  # increment
+                        operators_count[t] += 1  # increase count for this operator
+
+                    ## cheeting right now for checking increament and decreament
+                    else:
+                        if '--' in t:
+                            print(f'found operator -- in code {t}')
+                            static_declaration.append(
+                                f"int {operators_name['--'] + str(operators_count['--'])} = 0;\n")  # add counter
+                            append_in_for.append(
+                                f"{operators_name['--'] + str(operators_count['--'])}++;\n")  # increment
+                            operators_count['--'] += 1  # increase count for this operator
+
+                        elif '++' in t:
+                            print(f'found operator ++ in code {t}')
+                            static_declaration.append(
+                                f"int {operators_name['++'] + str(operators_count['++'])} = 0;\n")  # add counter
+                            append_in_for.append(
+                                f"{operators_name['++'] + str(operators_count['++'])}++;\n")  # increment
+                            operators_count['++'] += 1  # increase count for this operator
+
+
+                if t == '{': # end of for loop
+                    for_control = False
+
 
     lines_to_inject.append(line)
 
